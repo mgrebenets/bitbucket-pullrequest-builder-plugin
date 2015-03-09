@@ -20,4 +20,7 @@
   <f:entry title="Rebuild if destination branch changes?" field="checkDestinationCommit">
     <f:checkbox />
   </f:entry>
+  <f:entry title="Post post-build comment from file" field="postBuildCommentFilePath">
+    <f:textbox />
+  </f:entry>
 </j:jelly>

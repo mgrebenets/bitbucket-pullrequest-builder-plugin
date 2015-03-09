@@ -29,7 +29,8 @@ public class BitbucketBuildTrigger extends Trigger<AbstractProject<?, ?>> {
     private final String repositoryName;
     private final String ciSkipPhrases;
     private final boolean checkDestinationCommit;
-    
+    private final String postBuildCommentFilePath;
+
     transient private BitbucketPullRequestsBuilder bitbucketPullRequestsBuilder;
 
     @Extension
@@ -44,7 +45,8 @@ public class BitbucketBuildTrigger extends Trigger<AbstractProject<?, ?>> {
             String repositoryOwner,
             String repositoryName,
             String ciSkipPhrases,
-            boolean checkDestinationCommit
+            boolean checkDestinationCommit,
+            String postBuildCommentFilePath
             ) throws ANTLRException {
         super(cron);
         this.projectPath = projectPath;
@@ -55,6 +57,7 @@ public class BitbucketBuildTrigger extends Trigger<AbstractProject<?, ?>> {
         this.repositoryName = repositoryName;
         this.ciSkipPhrases = ciSkipPhrases;
         this.checkDestinationCommit = checkDestinationCommit;
+        this.postBuildCommentFilePath = postBuildCommentFilePath;
     }
 
     public String getProjectPath() {
@@ -84,9 +87,13 @@ public class BitbucketBuildTrigger extends Trigger<AbstractProject<?, ?>> {
     public String getCiSkipPhrases() {
         return ciSkipPhrases;
     }
-    
+
     public boolean getCheckDestinationCommit() {
     	return checkDestinationCommit;
+    }
+
+    public String getPostBuildCommentFilePath() {
+      return postBuildCommentFilePath;
     }
 
     @Override
