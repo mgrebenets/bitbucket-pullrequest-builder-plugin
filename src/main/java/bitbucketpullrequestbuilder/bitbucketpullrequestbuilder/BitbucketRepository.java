@@ -1,5 +1,10 @@
 package bitbucketpullrequestbuilder.bitbucketpullrequestbuilder;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +25,7 @@ public class BitbucketRepository {
     private static final Logger logger = Logger.getLogger(BitbucketRepository.class.getName());
     public static final String BUILD_START_MARKER = "[*BuildStarted* **%s**] %s into %s";
     public static final String BUILD_FINISH_MARKER = "[*BuildFinished* **%s**] %s into %s";
+    public static final String POST_BUILD_COMMENT_MARKER = "[*Post-Build Comment* **%s**] %s";
 
     public static final String BUILD_START_REGEX = "\\[\\*BuildStarted\\* \\*\\*%s\\*\\*\\] ([0-9a-fA-F]+) into ([0-9a-fA-F]+)";
     public static final String BUILD_FINISH_REGEX = "\\[\\*BuildFinished\\* \\*\\*%s\\*\\*\\] ([0-9a-fA-F]+) into ([0-9a-fA-F]+)";
@@ -91,6 +97,25 @@ public class BitbucketRepository {
         this.client.deletePullRequestComment(pullRequestId,commentId);
     }
 
+    public void postPostBuildCommentFromFile(String pullRequestId, String commentFilePath, String buildUrl) {
+        String comment = null;
+        try {
+            comment = new String(Files.readAllBytes(Paths.get(commentFilePath)), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (comment == null || comment.isEmpty()) {
+          logger.info("Not posting empty comment.");
+          return;
+        }
+
+        // Prepend custom header
+        String header = String.format(POST_BUILD_COMMENT_MARKER, builder.getProject().getDisplayName(), buildUrl);
+        comment = header + "\n\n" + comment;  // 2 new lines for markdown to be happy
+        this.client.postPullRequestComment(pullRequestId, comment);
+    }
+
     public void postFinishedComment(String pullRequestId, String sourceCommit,  String destinationCommit, boolean success, String buildUrl) {
         String message = BUILD_FAILURE_COMMENT;
         if (success){
@@ -102,7 +127,7 @@ public class BitbucketRepository {
     }
 
     private boolean isBuildTarget(BitbucketPullRequestResponseValue pullRequest) {
-    	
+
         boolean shouldBuild = true;
         if (pullRequest.getState() != null && pullRequest.getState().equals("OPEN")) {
             if (isSkipBuild(pullRequest.getTitle())) {
@@ -115,10 +140,10 @@ public class BitbucketRepository {
             String owner = destination.getRepository().getOwnerName();
             String repositoryName = destination.getRepository().getRepositoryName();
             String destinationCommit = destination.getCommit().getHash();
-            
+
             String id = pullRequest.getId();
             List<BitbucketPullRequestComment> comments = client.getPullRequestComments(owner, repositoryName, id);
-            
+
             if (comments != null) {
                 Collections.sort(comments);
                 Collections.reverse(comments);
@@ -151,16 +176,16 @@ public class BitbucketRepository {
                         //first check source commit -- if it doesn't match, just move on. If it does, investigate further.
                         if (sourceCommitMatch.equalsIgnoreCase(sourceCommit)) {
                             // if we're checking destination commits, and if this doesn't match, then move on.
-                            if (this.trigger.getCheckDestinationCommit() 
+                            if (this.trigger.getCheckDestinationCommit()
                                     && (!destinationCommitMatch.equalsIgnoreCase(destinationCommit))) {
                             	continue;
                             }
-                            
+
                             shouldBuild = false;
                             break;
-                        } 
+                        }
                     }
-                    
+
                     if (content.contains(BUILD_REQUEST_MARKER.toLowerCase())) {
                         shouldBuild = true;
                         break;

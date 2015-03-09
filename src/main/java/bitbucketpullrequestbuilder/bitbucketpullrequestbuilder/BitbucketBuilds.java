@@ -57,6 +57,14 @@ public class BitbucketBuilds {
             buildUrl = rootUrl + build.getUrl();
         }
         repository.deletePullRequestComment(cause.getPullRequestId(), cause.getBuildStartCommentId());
+
+        String commentFilePath = trigger.getPostBuildCommentFilePath();
+        if (commentFilePath != null && !commentFilePath.isEmpty()) {
+          // build now has workspace path, time to use it when posting the post-build comment (toString is deprecated)
+          repository.postPostBuildCommentFromFile(cause.getPullRequestId(), build.getWorkspace().toString() + "/" + commentFilePath, buildUrl);
+        }
+
         repository.postFinishedComment(cause.getPullRequestId(), cause.getSourceCommitHash(), cause.getDestinationCommitHash(), result == Result.SUCCESS, buildUrl);
+
     }
 }
