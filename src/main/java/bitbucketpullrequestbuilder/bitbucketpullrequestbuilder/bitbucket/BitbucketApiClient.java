@@ -84,7 +84,6 @@ public class BitbucketApiClient {
         HttpClient client = new HttpClient();
         if (Jenkins.getInstance() != null) {
             ProxyConfiguration proxy = Jenkins.getInstance().proxy;
-            logger.info("Jenkins proxy: " + proxy.name + ":" + proxy.port);
             if (proxy != null) {
                 logger.info("Jenkins proxy: " + proxy.name + ":" + proxy.port);
                 client.getHostConfiguration().setProxy(proxy.name, proxy.port);
